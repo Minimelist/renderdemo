@@ -35,7 +35,24 @@ const initDB = async () => {
   }
 };
 
-// Routes
+// ===== ADD THIS ROOT ROUTE =====
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Task Manager API is running!',
+    version: '1.0.0',
+    endpoints: {
+      tasks: '/api/tasks',
+      taskById: '/api/tasks/:id',
+      health: '/health'
+    }
+  });
+});
+// ================================
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy', service: 'node-api' });
+});
 
 // Get all tasks
 app.get('/api/tasks', async (req, res) => {
@@ -112,16 +129,13 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'node-api' });
-});
-
 // Start server
 const startServer = async () => {
   await initDB();
   app.listen(PORT, () => {
     console.log(`Node.js API running on port ${PORT}`);
+    console.log(`Root endpoint: http://localhost:${PORT}/`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
   });
 };
 
