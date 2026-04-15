@@ -1,0 +1,58 @@
+services:
+  # Node.js Backend API
+  - type: web
+    name: task-manager-node-api
+    runtime: node
+    repo: https://github.com/YOUR_USERNAME/task-manager-app
+    plan: free
+    rootDir: backend-node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: task-manager-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+
+  # Python Backend API
+  - type: web
+    name: task-manager-python-api
+    runtime: python3
+    repo: https://github.com/YOUR_USERNAME/task-manager-app
+    plan: free
+    rootDir: backend-python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: task-manager-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3002
+
+  # React Frontend
+  - type: static
+    name: task-manager-frontend
+    repo: https://github.com/YOUR_USERNAME/task-manager-app
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishPath: build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://task-manager-node-api.onrender.com
+      - key: REACT_APP_PYTHON_API_URL
+        value: https://task-manager-python-api.onrender.com
+
+databases:
+  - name: task-manager-db
+    plan: free
+    databaseName: task_manager
+    user: task_manager_user
