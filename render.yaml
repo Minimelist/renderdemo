@@ -14,13 +14,11 @@ services:
           property: connectionString
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3001
 
   # Python Backend API
   - type: web
     name: task-manager-python-api
-    runtime: python3
+    runtime: python
     plan: free
     rootDir: backend-python
     buildCommand: pip install -r requirements.txt
@@ -32,17 +30,18 @@ services:
           property: connectionString
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3002
 
-  # React Frontend - Use 'web' type instead of 'static'
+  # React Frontend as Web Service
   - type: web
     name: task-manager-frontend
-    runtime: static
+    runtime: node
     plan: free
     rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: build
+    buildCommand: |-
+      npm install
+      npm run build
+      npm install -g serve
+    startCommand: serve -s build -l $PORT
     envVars:
       - key: REACT_APP_API_URL
         value: https://task-manager-node-api.onrender.com
@@ -52,5 +51,3 @@ services:
 databases:
   - name: task-manager-db
     plan: free
-    databaseName: task_manager
-    user: task_manager_user
