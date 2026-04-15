@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const PYTHON_API_URL = process.env.REACT_APP_PYTHON_API_URL || 'http://localhost:3002';
+// Use environment variables with fallbacks
+const API_URL = process.env.REACT_APP_API_URL || '';
+const PYTHON_API_URL = process.env.REACT_APP_PYTHON_API_URL || '';
+
+// For debugging
+console.log('API_URL:', API_URL);
+console.log('PYTHON_API_URL:', PYTHON_API_URL);
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -11,21 +16,24 @@ function App() {
   const [newTask, setNewTask] = useState({ title: '', description: '', status: 'pending' });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('tasks');
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchTasks();
     fetchAnalytics();
-    
-    // Log page view to Python API
     logRequest('page_view', 0);
   }, []);
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/tasks`);
+      setError(null);
+      const url = `${API_URL}/api/tasks`;
+      console.log('Fetching tasks from:', url);
+      const response = await axios.get(url);
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      setError(`Failed to fetch tasks: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -34,16 +42,21 @@ function App() {
   const fetchAnalytics = async () => {
     try {
       const startTime = Date.now();
-      const response = await axios.get(`${PYTHON_API_URL}/api/analytics`);
+      const url = `${PYTHON_API_URL}/api/analytics`;
+      console.log('Fetching analytics from:', url);
+      const response = await axios.get(url);
       const endTime = Date.now();
       setAnalytics(response.data);
-      logRequest('analytics_fetch', endTime - startTime);
+      await logRequest('analytics_fetch', endTime - startTime);
     } catch (error) {
       console.error('Error fetching analytics:', error);
+      setAnalytics({ error: 'Failed to load analytics', total_requests: 0 });
     }
   };
 
   const logRequest = async (endpoint, responseTime) => {
+    if (!PYTHON_API_URL) return;
+    
     try {
       await axios.post(`${PYTHON_API_URL}/api/log-request`, {
         endpoint: endpoint,
@@ -64,9 +77,10 @@ function App() {
       const response = await axios.post(`${API_URL}/api/tasks`, newTask);
       setTasks([response.data, ...tasks]);
       setNewTask({ title: '', description: '', status: 'pending' });
-      logRequest('create_task', Date.now() - startTime);
+      await logRequest('create_task', Date.now() - startTime);
     } catch (error) {
       console.error('Error creating task:', error);
+      setError(`Failed to create task: ${error.message}`);
     }
   };
 
@@ -81,9 +95,10 @@ function App() {
         status: newStatus
       });
       setTasks(tasks.map(t => t.id === id ? response.data : t));
-      logRequest('update_task', Date.now() - startTime);
+      await logRequest('update_task', Date.now() - startTime);
     } catch (error) {
       console.error('Error updating task:', error);
+      setError(`Failed to update task: ${error.message}`);
     }
   };
 
@@ -92,9 +107,10 @@ function App() {
     try {
       await axios.delete(`${API_URL}/api/tasks/${id}`);
       setTasks(tasks.filter(t => t.id !== id));
-      logRequest('delete_task', Date.now() - startTime);
+      await logRequest('delete_task', Date.now() - startTime);
     } catch (error) {
       console.error('Error deleting task:', error);
+      setError(`Failed to delete task: ${error.message}`);
     }
   };
 
@@ -112,6 +128,13 @@ function App() {
         <h1>📋 Task Manager</h1>
         <p>Full-stack deployment test with Node.js + Python + PostgreSQL + React</p>
       </header>
+
+      {error && (
+        <div className="error-message">
+          ⚠️ {error}
+          <button onClick={() => setError(null)}>Dismiss</button>
+        </div>
+      )}
 
       <div className="tabs">
         <button className={activeTab === 'tasks' ? 'active' : ''} onClick={() => setActiveTab('tasks')}>
@@ -189,37 +212,34 @@ function App() {
       {activeTab === 'analytics' && analytics && (
         <div className="analytics-container">
           <h2>📊 API Analytics</h2>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <h3>Total API Requests</h3>
-              <div className="stat-value">{analytics.total_requests}</div>
-            </div>
-            <div className="stat-card">
-              <h3>Average Response Time</h3>
-              <div className="stat-value">{analytics.average_response_time}ms</div>
-            </div>
-            <div className="stat-card">
-              <h3>Most Accessed Endpoint</h3>
-              <div className="stat-value">
-                {analytics.most_accessed_endpoint?.endpoint || 'N/A'}
-                <small>{analytics.most_accessed_endpoint?.count} requests</small>
+          {analytics.error ? (
+            <div className="error-message">{analytics.error}</div>
+          ) : (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <h3>Total API Requests</h3>
+                <div className="stat-value">{analytics.total_requests || 0}</div>
+              </div>
+              <div className="stat-card">
+                <h3>Average Response Time</h3>
+                <div className="stat-value">{analytics.average_response_time || 0}ms</div>
+              </div>
+              <div className="stat-card">
+                <h3>Most Accessed Endpoint</h3>
+                <div className="stat-value">
+                  {analytics.most_accessed_endpoint?.endpoint || 'N/A'}
+                  <small>{analytics.most_accessed_endpoint?.count || 0} requests</small>
+                </div>
               </div>
             </div>
-          </div>
+          )}
           <div className="info-box">
-            <h3>💡 About This Demo</h3>
-            <p>
-              This application demonstrates a full-stack deployment with:
-            </p>
+            <h3>💡 Debug Info</h3>
+            <p>API URLs being used:</p>
             <ul>
-              <li><strong>Node.js API</strong> - Task management CRUD operations</li>
-              <li><strong>Python API</strong> - Analytics and request logging</li>
-              <li><strong>PostgreSQL</strong> - Data persistence (separate tables for tasks and analytics)</li>
-              <li><strong>React</strong> - Interactive frontend</li>
+              <li><strong>Node.js API:</strong> {API_URL || 'Not set'}</li>
+              <li><strong>Python API:</strong> {PYTHON_API_URL || 'Not set'}</li>
             </ul>
-            <p>
-              All services are connected and working together on Render!
-            </p>
           </div>
         </div>
       )}
