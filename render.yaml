@@ -30,6 +30,8 @@ services:
           property: connectionString
       - key: NODE_ENV
         value: production
+      - key: PYTHON_VERSION
+        value: 3.11.0  # Pin to stable version
 
   # React Frontend as Web Service
   - type: web
