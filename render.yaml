@@ -4,7 +4,7 @@ services:
     name: task-manager-node-api
     runtime: node
     plan: free
-    rootDir: backend-node
+    rootDir: backend-node  # IMPORTANT: Points to Node.js subdirectory
     buildCommand: npm install
     startCommand: node server.js
     envVars:
@@ -20,7 +20,7 @@ services:
     name: task-manager-python-api
     runtime: python
     plan: free
-    rootDir: backend-python
+    rootDir: backend-python  # IMPORTANT: Points to Python subdirectory
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
@@ -31,24 +31,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PYTHON_VERSION
-        value: 3.11.0  # Pin to stable version
-
-  # React Frontend as Web Service
-  - type: web
-    name: task-manager-frontend
-    runtime: node
-    plan: free
-    rootDir: frontend
-    buildCommand: |-
-      npm install
-      npm run build
-      npm install -g serve
-    startCommand: serve -s build -l $PORT
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://task-manager-node-api.onrender.com
-      - key: REACT_APP_PYTHON_API_URL
-        value: https://task-manager-python-api.onrender.com
+        value: 3.11.0
 
 databases:
   - name: task-manager-db
