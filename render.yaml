@@ -3,7 +3,6 @@ services:
   - type: web
     name: task-manager-node-api
     runtime: node
-    repo: https://github.com/YOUR_USERNAME/task-manager-app
     plan: free
     rootDir: backend-node
     buildCommand: npm install
@@ -22,7 +21,6 @@ services:
   - type: web
     name: task-manager-python-api
     runtime: python3
-    repo: https://github.com/YOUR_USERNAME/task-manager-app
     plan: free
     rootDir: backend-python
     buildCommand: pip install -r requirements.txt
@@ -37,14 +35,14 @@ services:
       - key: PORT
         value: 3002
 
-  # React Frontend
-  - type: static
+  # React Frontend - Use 'web' type instead of 'static'
+  - type: web
     name: task-manager-frontend
-    repo: https://github.com/YOUR_USERNAME/task-manager-app
+    runtime: static
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    publishPath: build
+    staticPublishPath: build
     envVars:
       - key: REACT_APP_API_URL
         value: https://task-manager-node-api.onrender.com
