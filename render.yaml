@@ -1,30 +1,46 @@
 services:
+  # Backend API Service
   - type: web
-    name: task-manager-node-api
-    runtime: node
-    plan: free
-    buildCommand: npm run build-node
-    startCommand: npm run start-node
+    name: task-manager-api
+    env: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node index.js
     envVars:
-      - key: DATABASE_URL
+      - key: NODE_ENV
+        value: production
+      - key: DB_USER
         fromDatabase:
           name: task-manager-db
-          property: connectionString
-
-  - type: web
-    name: task-manager-python-api
-    runtime: python
-    plan: free
-    buildCommand: npm run build-python
-    startCommand: npm run start-python
-    envVars:
-      - key: DATABASE_URL
+          property: user
+      - key: DB_PASSWORD
         fromDatabase:
           name: task-manager-db
-          property: connectionString
-      - key: PYTHON_VERSION
-        value: 3.11.0
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: task-manager-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: task-manager-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: task-manager-db
+          property: database
 
+  # Frontend Static Site
+  - type: web
+    name: task-manager-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://task-manager-api.onrender.com/api
+
+# PostgreSQL Database
 databases:
   - name: task-manager-db
-    plan: free
+    databaseName: task_manager
+    user: task_manager_user
