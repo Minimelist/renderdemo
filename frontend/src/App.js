@@ -3,7 +3,7 @@ import TaskList from './components/TaskList';
 import TaskForm from './components/TaskForm';
 import './styles/App.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://task-manager-api-vsxx.onrender.com/api';
 
 function App() {
   const [tasks, setTasks] = useState([]);
