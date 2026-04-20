@@ -1,5 +1,4 @@
 services:
-  # Node.js Backend API
   - type: web
     name: task-manager-node-api
     runtime: node
@@ -14,8 +13,9 @@ services:
           property: connectionString
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 3001
 
-  # Python Backend API
   - type: web
     name: task-manager-python-api
     runtime: python
@@ -36,19 +36,3 @@ services:
 databases:
   - name: task-manager-db
     plan: free
-
-  # Frontend Static Site
-  - type: web
-    name: task-manager-frontend
-    env: static
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/build
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://task-manager-api.onrender.com/api
-
-# PostgreSQL Database
-databases:
-  - name: task-manager-db
-    databaseName: task_manager
-    user: task_manager_user
